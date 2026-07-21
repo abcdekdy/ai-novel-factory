@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QStackedWidget, QPushButton, QLabel, QFrame,
     QStatusBar, QMessageBox, QDialog
 )
-from PyQt6.QtCore import Qt, pyqtSlot
+from PyQt6.QtCore import Qt, pyqtSlot, QTimer
 from PyQt6.QtGui import QFont, QCursor, QColor, QPainter
 from pathlib import Path
 
@@ -133,9 +133,12 @@ class MainWindow(QMainWindow):
         for i, btn in enumerate(self.nav_buttons):
             btn.setChecked(i == index)
         self.nav_stack.setCurrentIndex(index)
-        # 进入项目库页时自动刷新
+        # 进入项目库页时自动刷新。
+        # 延迟 50ms 让 QStackedWidget.setCurrentIndex 触发的 show 链先完成。
+        # 如果 refresh 在 show 链进行中就执行，QScrollArea viewport 的 show
+        # 会让新卡片里的子按钮短暂变成顶级窗口，表现为约 90 个空白弹窗闪一下。
         if index == 3 and hasattr(self, 'projects_tab'):
-            self.projects_tab.refresh()
+            QTimer.singleShot(50, self.projects_tab.refresh)
 
     def _open_project_in_preview(self, project_path: str):
         """从项目库打开已有项目到预览页"""
