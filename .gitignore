@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.spec
+
+# PyInstaller
+*.manifest
+*.pkg
+*.exe
+warn-*.txt
+xref-*.html
+Analysis-*.toc
+COLLECT-*.toc
+EXE-*.toc
+PKG-*.toc
+PYZ-*.toc
+localpycs/
+base_library.zip
+
+# 项目数据（用户生成）
+projects/
+
+# 日志
+app_stdout.log
+
+# 系统
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
