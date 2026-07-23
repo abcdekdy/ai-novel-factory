@@ -6,9 +6,9 @@ Sidebar uses CLASS-based selectors. Apple Blue accent on light gray.
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QStackedWidget, QPushButton, QLabel, QFrame,
-    QStatusBar, QMessageBox, QDialog
+    QStatusBar, QMessageBox, QDialog, QGraphicsOpacityEffect
 )
-from PyQt6.QtCore import Qt, pyqtSlot, QTimer
+from PyQt6.QtCore import Qt, pyqtSlot, QTimer, QPropertyAnimation, QEasingCurve
 from PyQt6.QtGui import QFont, QCursor, QColor, QPainter
 from pathlib import Path
 
@@ -143,6 +143,19 @@ class MainWindow(QMainWindow):
     def _switch(self, index: int):
         for i, btn in enumerate(self.nav_buttons):
             btn.setChecked(i == index)
+        # 页面切换淡入动效（80ms）
+        new_page = self.nav_stack.widget(index)
+        if new_page is not None and new_page != self.nav_stack.currentWidget():
+            effect = QGraphicsOpacityEffect(new_page)
+            new_page.setGraphicsEffect(effect)
+            anim = QPropertyAnimation(effect, b"opacity")
+            anim.setDuration(80)
+            anim.setStartValue(0.0)
+            anim.setEndValue(1.0)
+            anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+            anim.start()
+            # 防止被垃圾回收
+            new_page._switch_anim = anim
         self.nav_stack.setCurrentIndex(index)
         # 进入项目库页时自动刷新。
         # 延迟 50ms 让 QStackedWidget.setCurrentIndex 触发的 show 链先完成。
