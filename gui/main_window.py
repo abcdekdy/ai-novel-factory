@@ -6,9 +6,9 @@ Sidebar uses CLASS-based selectors. Apple Blue accent on light gray.
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QStackedWidget, QPushButton, QLabel, QFrame,
-    QStatusBar, QMessageBox, QDialog, QGraphicsOpacityEffect
+    QStatusBar, QMessageBox, QDialog
 )
-from PyQt6.QtCore import Qt, pyqtSlot, QTimer, QPropertyAnimation, QEasingCurve
+from PyQt6.QtCore import Qt, pyqtSlot, QTimer
 from PyQt6.QtGui import QFont, QCursor, QColor, QPainter
 from pathlib import Path
 
@@ -23,14 +23,13 @@ from assets import design_tokens as dt
 
 
 class AppleNavButton(QPushButton):
-    """侧边栏导航按钮 — 选中态左侧活动竖条 + 圆角药丸背景。"""
+    """侧边栏导航按钮 — 选中态左侧白色活动竖条。"""
     def __init__(self, text: str, parent=None):
         super().__init__(text, parent)
         self.setCheckable(True)
         self.setFixedHeight(40)
         self.setFont(QFont("Inter", 13))
         self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        self._active = False
 
     def paintEvent(self, event):
         try:
@@ -38,8 +37,8 @@ class AppleNavButton(QPushButton):
             if self.isChecked():
                 p = QPainter(self)
                 p.setRenderHint(QPainter.RenderHint.Antialiasing)
-                c = QColor(dt.ACCENT)
-                p.fillRect(0, 8, 3, 24, c)
+                # 选中态在蓝色背景上画白色竖条，形成对比
+                p.fillRect(0, 8, 3, 24, QColor("#FFFFFF"))
         except Exception as e:
             print(f"[AppleNavButton paintEvent ERROR] {e}")
 
@@ -124,6 +123,7 @@ QPushButton {{
     padding: 6px 16px;
     border-radius: 10px;
     font-size: 13px;
+    font-weight: 600;
 }}
 QPushButton:hover {{
     border-color: {a["ACCENT"]};
@@ -136,40 +136,47 @@ QPushButton#primaryButton {{
     background-color: {a["ACCENT"]};
     color: #FFFFFF;
     border: none;
-    padding: 8px 22px;
+    padding: 12px 30px;
     border-radius: 10px;
+    font-size: 14px;
     font-weight: 600;
 }}
 QPushButton#primaryButton:hover {{ background-color: {a["ACCENT_HOVER"]}; }}
 QPushButton#primaryButton:pressed {{ background-color: {a["ACCENT_DIM"]}; }}
-QPushButton#primaryButton:disabled {{ background-color: {a["BORDER"]}; color: {a["TEXT_DISABLED"]}; }}
+QPushButton#primaryButton:disabled {{ background-color: {a["BORDER"]}; color: #FFFFFF; }}
 
-QTextEdit, QLineEdit {{
+QPushButton[secondary="true"] {{
+    background-color: {a["BG_INPUT"]};
+    color: {a["ACCENT"]};
+    border: 1px solid {a["BORDER"]};
+    padding: 4px 14px;
+    font-weight: 600;
+}}
+QPushButton[secondary="true"]:hover {{
+    background-color: {a["ACCENT_SOFT"]};
+    border: 1px solid {a["ACCENT"]};
+}}
+
+QTextEdit, QPlainTextEdit, QLineEdit {{
     background-color: {a["SURFACE"]};
     color: {a["TEXT_PRIMARY"]};
     border: 1px solid {a["BORDER"]};
-    border-radius: 8px;
-    padding: 6px 10px;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
     selection-background-color: {a["ACCENT"]};
+    selection-color: #FFFFFF;
 }}
-QTextEdit:focus, QLineEdit:focus {{
-    border: 2px solid {a["ACCENT"]};
+QTextEdit:focus, QPlainTextEdit:focus, QLineEdit:focus {{
+    border: 1px solid {a["ACCENT"]};
+    background-color: {a["SURFACE"]};
 }}
 
-QListWidget {{
-    background: transparent;
-    border: none;
-    color: {a["TEXT_PRIMARY"]};
-}}
-QListWidget::item:selected {{
-    background: {a["ACCENT_SOFT"]};
-    color: {a["ACCENT"]};
-    border-radius: 6px;
-}}
-QListWidget::item:hover {{
-    background: {dt.rgba(a["TEXT_PRIMARY"], 0.04)};
-    border-radius: 6px;
-}}
+QLabel {{ color: {a["TEXT_MUTED"]}; font-size: 13px; }}
+QLabel#heading {{ color: {a["TEXT_PRIMARY"]}; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }}
+QLabel#subheading {{ color: {a["TEXT_MUTED"]}; font-size: 13px; }}
+QLabel#section {{ color: {a["TEXT_PRIMARY"]}; font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }}
+QLabel#muted {{ color: {a["TEXT_MUTED"]}; font-size: 12px; }}
 
 QProgressBar {{
     border: none;
@@ -191,42 +198,128 @@ QScrollBar:vertical {{
 QScrollBar::handle:vertical {{
     background: {a["BORDER"]};
     border-radius: 3px;
-    min-height: 30px;
+    min-height: 40px;
 }}
 QScrollBar::handle:vertical:hover {{ background: {a["TEXT_MUTED"]}; }}
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
+
+QScrollBar:horizontal {{
+    background: transparent;
+    height: 6px;
+    border-radius: 3px;
+}}
+QScrollBar::handle:horizontal {{
+    background: {a["BORDER"]};
+    border-radius: 3px;
+    min-width: 40px;
+}}
+QScrollBar::handle:horizontal:hover {{ background: {a["TEXT_MUTED"]}; }}
 
 QComboBox, QSpinBox {{
     background-color: {a["SURFACE"]};
     color: {a["TEXT_PRIMARY"]};
     border: 1px solid {a["BORDER"]};
-    border-radius: 8px;
-    padding: 4px 8px;
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 13px;
 }}
-QComboBox::drop-down {{ border: none; width: 20px; }}
+QComboBox:hover, QSpinBox:hover {{ border: 1px solid {a["TEXT_MUTED"]}; }}
+QComboBox:focus, QSpinBox:focus {{ border: 1px solid {a["ACCENT"]}; }}
 QComboBox QAbstractItemView {{
     background: {a["SURFACE"]};
     color: {a["TEXT_PRIMARY"]};
+    border: 1px solid {a["BORDER"]};
+    border-radius: 10px;
     selection-background-color: {a["ACCENT_SOFT"]};
+    selection-color: {a["ACCENT"]};
 }}
+QComboBox::drop-down {{ border: none; width: 24px; }}
+
+QSlider::groove:horizontal {{
+    height: 4px;
+    background: {a["BG_INPUT"]};
+    border-radius: 2px;
+}}
+QSlider::handle:horizontal {{
+    background: {a["SURFACE"]};
+    width: 18px; height: 18px;
+    margin: -7px 0;
+    border-radius: 9px;
+    border: 1px solid {a["BORDER"]};
+}}
+QSlider::sub-page:horizontal {{ background: {a["ACCENT"]}; border-radius: 2px; }}
 
 QToolTip {{
     background: {a["TEXT_PRIMARY"]};
     color: {a["BG_BASE"]};
     border: none;
-    border-radius: 6px;
-    padding: 4px 8px;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
 }}
 
 QStatusBar {{
     background: {a["BG_BASE"]};
     color: {a["TEXT_MUTED"]};
+    font-size: 12px;
 }}
 
-AppleCard, AppleInput, AppleInset {{
+QGroupBox {{
     background-color: {a["SURFACE"]};
+    border: 1px solid {a["BORDER"]};
+    border-radius: 14px;
+    margin-top: 20px;
+    padding: 28px 22px 22px 22px;
+    font-weight: 600;
     color: {a["TEXT_PRIMARY"]};
 }}
+QGroupBox::title {{
+    subcontrol-origin: margin;
+    left: 18px; top: 16px;
+    padding: 0 6px;
+    color: {a["TEXT_MUTED"]};
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}}
+
+QListWidget {{
+    background: transparent;
+    border: none;
+    font-size: 13px;
+    color: {a["TEXT_PRIMARY"]};
+}}
+QListWidget::item {{
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin: 2px 4px;
+}}
+QListWidget::item:selected {{
+    background: {a["ACCENT_SOFT"]};
+    color: {a["ACCENT"]};
+}}
+QListWidget::item:hover {{
+    background: {dt.rgba(a["TEXT_PRIMARY"], 0.04)};
+}}
+
+QSplitter::handle {{ background: {a["BG_BASE"]}; }}
+QSplitter::handle:horizontal {{ width: 2px; }}
+QSplitter::handle:vertical {{ height: 2px; }}
+
+QMenu {{
+    background: {a["SURFACE"]};
+    border: 1px solid {a["BORDER"]};
+    border-radius: 12px;
+    padding: 6px;
+}}
+QMenu::item {{
+    padding: 8px 24px;
+    border-radius: 8px;
+    color: {a["TEXT_PRIMARY"]};
+    font-size: 12px;
+}}
+QMenu::item:selected {{ background: {a["ACCENT_SOFT"]}; color: {a["ACCENT"]}; }}
 """
 
     def _setup_ui(self):
@@ -304,19 +397,6 @@ AppleCard, AppleInput, AppleInset {{
     def _switch(self, index: int):
         for i, btn in enumerate(self.nav_buttons):
             btn.setChecked(i == index)
-        # 页面切换淡入动效（80ms）
-        new_page = self.nav_stack.widget(index)
-        if new_page is not None and new_page != self.nav_stack.currentWidget():
-            effect = QGraphicsOpacityEffect(new_page)
-            new_page.setGraphicsEffect(effect)
-            anim = QPropertyAnimation(effect, b"opacity")
-            anim.setDuration(80)
-            anim.setStartValue(0.0)
-            anim.setEndValue(1.0)
-            anim.setEasingCurve(QEasingCurve.Type.OutCubic)
-            anim.start()
-            # 防止被垃圾回收
-            new_page._switch_anim = anim
         self.nav_stack.setCurrentIndex(index)
         # 进入项目库页时自动刷新。
         # 延迟 50ms 让 QStackedWidget.setCurrentIndex 触发的 show 链先完成。

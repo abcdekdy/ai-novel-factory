@@ -53,20 +53,15 @@ def _card_shadow(parent, strong=False):
 class AppleCard(QFrame):
     """
     Apple 风格卡片 — 纯白底 + 轻投影 + 顶部高光。
+    背景和边框由 paintEvent 绘制，不依赖 QSS（避免与主题系统冲突）。
     .content_layout() 获取内容 QVBoxLayout。
     """
     def __init__(self, radius=None, strong_shadow=False, parent=None):
         super().__init__(parent)
         self._radius = radius if radius is not None else dt.RADIUS_LG
-        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        self._strong = strong_shadow
+        # 不设置 WA_StyledBackground，由 paintEvent 完全自绘
         self.setGraphicsEffect(_card_shadow(self, strong=strong_shadow))
-        self.setStyleSheet(f"""
-            AppleCard {{
-                background-color: {dt.SURFACE};
-                border: 1px solid {dt.BORDER_LIGHT};
-                border-radius: {self._radius}px;
-            }}
-        """)
         self._inner = QVBoxLayout(self)
         self._inner.setContentsMargins(dt.LG, dt.LG, dt.LG, dt.LG)
         self._inner.setSpacing(0)
@@ -75,16 +70,23 @@ class AppleCard(QFrame):
         return self._inner
 
     def paintEvent(self, event):
-        """绘制顶部高光（参考 dashdot 玻璃拟态）。"""
+        """自绘背景 + 边框 + 顶部高光（参考 dashdot 玻璃拟态）。"""
         try:
-            super().paintEvent(event)
             p = QPainter(self)
             p.setRenderHint(QPainter.RenderHint.Antialiasing)
+            rect = self.rect().adjusted(1, 1, -1, -1)
+            # 背景
+            p.fillRect(rect, QColor(dt.SURFACE))
+            # 边框
+            border = QColor(dt.BORDER_LIGHT)
+            border.setAlphaF(0.5)
+            p.setPen(border)
+            p.drawRoundedRect(rect, self._radius, self._radius)
             # 顶部 1px 高光
             highlight = QColor(dt.TEXT_PRIMARY)
             highlight.setAlphaF(dt.HIGHLIGHT_ALPHA)
             p.setPen(highlight)
-            p.drawLine(0, 0, self.width(), 0)
+            p.drawLine(self._radius, 1, self.width() - self._radius, 1)
         except Exception as e:
             print(f"[AppleCard paintEvent ERROR] {e}")
 
@@ -96,18 +98,24 @@ class AppleInset(QFrame):
     """
     Apple 风格凹陷容器 — 浅灰底 + 细边框。
     适合输入框背景、日志控制台、章节列表。
+    由 paintEvent 自绘，不依赖 QSS。
     """
     def __init__(self, radius=None, parent=None):
         super().__init__(parent)
         self._radius = radius if radius is not None else dt.RADIUS_MD
-        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        self.setStyleSheet(f"""
-            AppleInset {{
-                background-color: {dt.BG_INPUT};
-                border: 1px solid {dt.BORDER};
-                border-radius: {self._radius}px;
-            }}
-        """)
+
+    def paintEvent(self, event):
+        try:
+            p = QPainter(self)
+            p.setRenderHint(QPainter.RenderHint.Antialiasing)
+            rect = self.rect().adjusted(1, 1, -1, -1)
+            p.fillRect(rect, QColor(dt.BG_INPUT))
+            border = QColor(dt.BORDER)
+            border.setAlphaF(0.5)
+            p.setPen(border)
+            p.drawRoundedRect(rect, self._radius, self._radius)
+        except Exception as e:
+            print(f"[AppleInset paintEvent ERROR] {e}")
 
 
 # =======================================================================
@@ -116,24 +124,30 @@ class AppleInset(QFrame):
 class AppleInput(QFrame):
     """
     包装任意 QTextEdit / QLineEdit，外层套 AppleInset 视觉。
+    由 paintEvent 自绘，不依赖 QSS。
     """
     def __init__(self, child_widget, radius=None, parent=None):
         super().__init__(parent)
         self._radius = radius if radius is not None else dt.RADIUS_MD
-        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        self.setStyleSheet(f"""
-            AppleInput {{
-                background-color: {dt.BG_INPUT};
-                border: 1px solid {dt.BORDER_INPUT};
-                border-radius: {self._radius}px;
-            }}
-        """)
         lay = QVBoxLayout(self)
         lay.setContentsMargins(dt.MD, dt.MD, dt.MD, dt.MD)
         lay.setSpacing(0)
         self._child = child_widget
         child_widget.setParent(self)
         lay.addWidget(child_widget)
+
+    def paintEvent(self, event):
+        try:
+            p = QPainter(self)
+            p.setRenderHint(QPainter.RenderHint.Antialiasing)
+            rect = self.rect().adjusted(1, 1, -1, -1)
+            p.fillRect(rect, QColor(dt.BG_INPUT))
+            border = QColor(dt.BORDER_INPUT)
+            border.setAlphaF(0.5)
+            p.setPen(border)
+            p.drawRoundedRect(rect, self._radius, self._radius)
+        except Exception as e:
+            print(f"[AppleInput paintEvent ERROR] {e}")
 
 
 # =======================================================================

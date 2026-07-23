@@ -160,14 +160,7 @@ class _ProjectCard(QFrame):
         c = QColor(dt.SHADOW_COLOR); c.setAlphaF(dt.SHADOW_ALPHA)
         eff.setColor(c); eff.setOffset(0, dt.SHADOW_Y); eff.setBlurRadius(dt.SHADOW_BLUR)
         self.setGraphicsEffect(eff)
-
-        self.setStyleSheet(f"""
-            _ProjectCard {{
-                background-color: {dt.SURFACE};
-                border: 1px solid {dt.BORDER_LIGHT};
-                border-radius: {dt.RADIUS_LG}px;
-            }}
-        """)
+        # 背景由 paintEvent 自绘（兼容主题系统）
 
         self._build_ui()
 
@@ -402,6 +395,20 @@ class _ProjectCard(QFrame):
 
         root.addLayout(btn_row)
         self.btn_row = btn_row
+
+    def paintEvent(self, event):
+        """自绘背景 + 边框（兼容主题系统）。"""
+        try:
+            p = QPainter(self)
+            p.setRenderHint(QPainter.RenderHint.Antialiasing)
+            rect = self.rect().adjusted(1, 1, -1, -1)
+            p.fillRect(rect, QColor(dt.SURFACE))
+            border = QColor(dt.BORDER_LIGHT)
+            border.setAlphaF(0.5)
+            p.setPen(border)
+            p.drawRoundedRect(rect, dt.RADIUS_LG, dt.RADIUS_LG)
+        except Exception as e:
+            print(f"[_ProjectCard paintEvent ERROR] {e}")
 
     def refresh_card(self):
         """从磁盘重新加载 summary，切换按钮显隐（不增删布局，避免 PyQt6 takeAt 问题）。"""

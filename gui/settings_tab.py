@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
     QGraphicsDropShadowEffect, QFrame, QScrollArea
 )
 from PyQt6.QtCore import Qt, pyqtSignal
-from PyQt6.QtGui import QFont, QCursor, QColor
+from PyQt6.QtGui import QFont, QCursor, QColor, QPainter
 
 from core.config import load_config, save_config
 from core.llm_client import test_connection
@@ -323,26 +323,18 @@ class SettingsTab(QWidget):
 
 
 class _AppleSettingsPanel(QFrame):
-    """Apple 风格设置面板 — 白底 + 轻投影，替代 QGroupBox。提供 form_layout()。"""
+    """Apple 风格设置面板 — 白底 + 轻投影，替代 QGroupBox。提供 form_layout()。
+    由 paintEvent 自绘，不依赖 QSS（兼容主题系统）。"""
     def __init__(self, title: str, radius=14, parent=None):
         super().__init__(parent)
         self._radius = radius
         self._title = title
-        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
 
         # 轻投影
         eff = QGraphicsDropShadowEffect(self)
         c = QColor(dt.SHADOW_COLOR); c.setAlphaF(dt.SHADOW_ALPHA)
         eff.setColor(c); eff.setOffset(0, dt.SHADOW_Y); eff.setBlurRadius(dt.SHADOW_BLUR)
         self.setGraphicsEffect(eff)
-
-        self.setStyleSheet(f"""
-            _AppleSettingsPanel {{
-                background-color: {dt.SURFACE};
-                border: 1px solid {dt.BORDER_LIGHT};
-                border-radius: {radius}px;
-            }}
-        """)
 
         self._main = QVBoxLayout(self)
         self._main.setContentsMargins(18, 14, 18, 14)
@@ -367,3 +359,16 @@ class _AppleSettingsPanel(QFrame):
 
     def finalize(self):
         self._main.addLayout(self._form)
+
+    def paintEvent(self, event):
+        try:
+            p = QPainter(self)
+            p.setRenderHint(QPainter.RenderHint.Antialiasing)
+            rect = self.rect().adjusted(1, 1, -1, -1)
+            p.fillRect(rect, QColor(dt.SURFACE))
+            border = QColor(dt.BORDER_LIGHT)
+            border.setAlphaF(0.5)
+            p.setPen(border)
+            p.drawRoundedRect(rect, self._radius, self._radius)
+        except Exception as e:
+            print(f"[_AppleSettingsPanel paintEvent ERROR] {e}")

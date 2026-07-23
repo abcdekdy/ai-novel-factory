@@ -43,11 +43,8 @@ def main():
     font.setStyleHint(QFont.StyleHint.SansSerif)
     app.setFont(font)
 
-    # 加载样式表
-    style_file = PROJECT_ROOT / "assets" / "style.qss"
-    if style_file.exists():
-        with open(style_file, "r", encoding="utf-8") as f:
-            app.setStyleSheet(f.read())
+    # 样式表由 MainWindow.apply_theme() 根据 config.json 主题动态生成并应用。
+    # 不再加载静态 style.qss，避免与主题系统冲突。
 
     # 启动Web监控
     config = load_config()
