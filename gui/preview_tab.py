@@ -405,17 +405,21 @@ class PreviewTab(QWidget):
         box = QMessageBox(self)
         box.setWindowTitle("未保存的修改")
         box.setText(
-            f"第 {self._current_chapter_index} 章有尚未保存的修改。"
-            f"要{a_name := action_name}吗？")
-        box.setInformativeText("选择「保存」后再切换，或直接「丢弃」。")
+            f"第 {self._current_chapter_index} 章有尚未保存的修改。")
+        box.setInformativeText(
+            f"选择「保存」后再切换，或「仅查看」保留修改并继续。")
         save_btn = box.addButton("保存", QMessageBox.ButtonRole.AcceptRole)
+        view_btn = box.addButton("仅查看", QMessageBox.ButtonRole.ActionRole)
         discard_btn = box.addButton("丢弃", QMessageBox.ButtonRole.DestructiveRole)
         cancel_btn = box.addButton("取消", QMessageBox.ButtonRole.RejectRole)
-        box.setDefaultButton(cancel_btn)
+        box.setDefaultButton(view_btn)
         box.exec()
         clicked = box.clickedButton()
         if clicked == save_btn:
             self._save_current_chapter()
+            return True
+        if clicked == view_btn:
+            # 仅查看：保留脏状态（不保存），允许切换；返回后用户可切回继续编辑
             return True
         if clicked == discard_btn:
             return True

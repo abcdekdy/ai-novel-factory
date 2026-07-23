@@ -125,7 +125,13 @@ class ProjectsTab(QWidget):
         # 2. 一次性替换 scroll area 的内容 widget（原子操作，中间态不可见）。
         #    setWidget 后旧容器会被 Qt 自动 reparent 到内部，无需也不能
         #    deleteLater（否则 RuntimeError: wrapped C/C++ object deleted）。
+        #
+        # 防止子按钮短暂变成顶级窗口（空白弹窗闪一下）：
+        # 替换期间隐藏滚动区，替换完成后再显示。
+        # 隐藏状态下 setWidget 触发的 show 链不会创建原生窗口。
+        self.scroll.setVisible(False)
         self.scroll.setWidget(new_container)
+        self.scroll.setVisible(True)
         self.cards_container = new_container
         self.cards_list = new_layout
 

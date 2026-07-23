@@ -318,6 +318,11 @@ class NovelPipeline(QObject):
 
     def _resume_chapter_generation(self, existing: dict):
         """从已保存的大纲继续，只生成尚未落盘的章节。"""
+        self.signals.log_signal.emit(
+            "Pipeline", f"▶️ _resume_chapter_generation 启动，"
+                        f"world_view={'有' if self.world_view else '无'}, "
+                        f"outline={'有' if self.outline else '无'}, "
+                        f"existing={len(existing)} 章")
         coarse_outline = self.world_view.get("chapter_outline", [])
         total_needed = len(coarse_outline)
         outline_chapters = self.outline.get("chapters", []) if self.outline else []
@@ -1076,6 +1081,13 @@ class NovelPipeline(QObject):
             }
             update_project_batches(self.project_dir, batch_info)
 
+        # 流水线正常完成 → 状态为 completed（覆盖 paused / generating）。
+        # 续写项目保持 generating 状态（连载未完）。
+        if is_continuation:
+            status = "generating"
+        else:
+            status = "completed"
+
         summary = {
             **previous_summary,
             "title": self.world_view.get("title", ""),
@@ -1084,12 +1096,9 @@ class NovelPipeline(QObject):
             "total_words": total_words,
             "avg_quality_score": round(avg_score, 1),
             "project_dir": str(self.project_dir) if self.project_dir else "",
-            "status": previous_summary.get("status", "generating"),
+            "status": status,
             "completed_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         }
-        # 续写项目保持 generating 状态（连载未完）
-        if is_continuation and summary["status"] == "completed":
-            summary["status"] = "generating"
 
         # 保存项目摘要
         if self.project_dir:
@@ -1252,7 +1261,18 @@ class NovelPipeline(QObject):
             self._pipeline_thread.start()
             return
 
-        self._resume_chapter_generation(existing)
+        # 章节补全 / 质量评估 / 修订均可能调用模型，放到后台线程，避免阻塞界面。
+        import threading
+        def _resume_worker():
+            try:
+                self._resume_chapter_generation(existing)
+            except Exception as e:
+                self._handle_error(f"恢复章节生成异常: {e}")
+        self._pipeline_thread = threading.Thread(
+            target=_resume_worker,
+            daemon=True,
+        )
+        self._pipeline_thread.start()
 
     def _merge_existing_chapters(self, existing: dict):
         """把已有章节预填进 self.chapters / self._chapter_results，用于续写场景。"""
@@ -1585,10 +1605,16 @@ class NovelPipeline(QObject):
         self.signals.log_signal.emit(
             "Pipeline", f"▶️ 用户确认世界观《{title}》，启动大纲生成...")
 
-        # 进入大纲生成
+        # 进入大纲生成（大纲生成调用模型，放到后台线程，避免阻塞界面）
         if self._finalize_pause_if_requested():
             return
-        self._build_outline(reviewed_world_view)
+        import threading
+        self._pipeline_thread = threading.Thread(
+            target=self._build_outline,
+            args=(reviewed_world_view,),
+            daemon=True,
+        )
+        self._pipeline_thread.start()
 
     def discard_world_view(self):
         """用户取消世界观审阅时调用 — 取消本次生成，回到空闲。"""

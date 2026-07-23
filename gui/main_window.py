@@ -15,7 +15,6 @@ from pathlib import Path
 from gui.inspiration_tab import InspirationTab
 from gui.agents_tab import AgentsTab
 from gui.preview_tab import PreviewTab
-from gui.monitor_tab import MonitorTab
 from gui.settings_tab import SettingsTab
 from gui.projects_tab import ProjectsTab
 from core.pipeline import NovelPipeline
@@ -81,7 +80,7 @@ class MainWindow(QMainWindow):
         self.nav_buttons = []
         self.nav_stack = QStackedWidget()
 
-        for i, name in enumerate(["创作", "工作台", "预览", "项目库", "监控", "设置"]):
+        for i, name in enumerate(["创作", "工作台", "预览", "项目库", "设置"]):
             btn = SidebarButton(name)
             btn.setCheckable(True)
             btn.setFixedHeight(40)
@@ -108,7 +107,6 @@ class MainWindow(QMainWindow):
         self.nav_stack.addWidget(PreviewTab(self.pipeline))
         self.projects_tab = ProjectsTab()
         self.nav_stack.addWidget(self.projects_tab)
-        self.nav_stack.addWidget(MonitorTab(self.config))
         self.nav_stack.addWidget(SettingsTab())
         # 把「打开项目」信号接到预览页 / 继续生成 信号接到流水线恢复
         self.projects_tab.open_project.connect(
@@ -139,6 +137,7 @@ class MainWindow(QMainWindow):
         # 会让新卡片里的子按钮短暂变成顶级窗口，表现为约 90 个空白弹窗闪一下。
         if index == 3 and hasattr(self, 'projects_tab'):
             QTimer.singleShot(50, self.projects_tab.refresh)
+        # API 配置变化时同步更新状态栏（设置页在 index 4）
 
     def _open_project_in_preview(self, project_path: str):
         """从项目库打开已有项目到预览页"""
@@ -174,7 +173,7 @@ class MainWindow(QMainWindow):
         if not self.config.get("api_key"):
             self.statusBar().showMessage(
                 f"项目《{title}》：请到「设置」页配置 API Key")
-            self._switch(5)
+            self._switch(4)
             return
 
         # 初始化流水线并启动后台恢复
@@ -209,7 +208,7 @@ class MainWindow(QMainWindow):
         if not self.config.get("api_key"):
             self.statusBar().showMessage(
                 f"项目《{title}》：请到「设置」页配置 API Key")
-            self._switch(5)
+            self._switch(4)
             return
 
         # 校验流水线是否空闲
@@ -302,7 +301,20 @@ class MainWindow(QMainWindow):
             try:
                 return fn(*args, **kwargs)
             except Exception as e:
+                import traceback
                 print(f"[UI Error] {fn.__name__}: {e}")
+                traceback.print_exc()
+                # 同步信号回调里抛出的异常会被 Qt 静默吞掉，这里主动弹框提示。
+                # 注意：不能传 self 作 parent（C++ 对象可能已销毁），用无父方式弹框。
+                try:
+                    box = QMessageBox()
+                    box.setIcon(QMessageBox.Icon.Critical)
+                    box.setWindowTitle("操作失败")
+                    box.setText(f"{fn.__name__} 出错：{e}")
+                    box.setInformativeText("请查看控制台获取详细 traceback。")
+                    box.exec()
+                except Exception:
+                    pass
         return wrapper
 
     def _setup_pipeline_signals(self):
