@@ -22,9 +22,26 @@ from core.config import load_config
 from assets import design_tokens as dt
 
 
-class SidebarButton(QPushButton):
-    """Dedicated sidebar button class — QSS targets `SidebarButton {}`."""
-    pass
+class AppleNavButton(QPushButton):
+    """侧边栏导航按钮 — 选中态左侧活动竖条 + 圆角药丸背景。"""
+    def __init__(self, text: str, parent=None):
+        super().__init__(text, parent)
+        self.setCheckable(True)
+        self.setFixedHeight(40)
+        self.setFont(QFont("Inter", 13))
+        self.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+        self._active = False
+
+    def paintEvent(self, event):
+        try:
+            super().paintEvent(event)
+            if self.isChecked():
+                p = QPainter(self)
+                p.setRenderHint(QPainter.RenderHint.Antialiasing)
+                c = QColor(dt.ACCENT)
+                p.fillRect(0, 8, 3, 24, c)
+        except Exception as e:
+            print(f"[AppleNavButton paintEvent ERROR] {e}")
 
 
 class Sidebar(QFrame):
@@ -81,11 +98,7 @@ class MainWindow(QMainWindow):
         self.nav_stack = QStackedWidget()
 
         for i, name in enumerate(["创作", "工作台", "预览", "项目库", "设置"]):
-            btn = SidebarButton(name)
-            btn.setCheckable(True)
-            btn.setFixedHeight(40)
-            btn.setFont(QFont("Inter", 13))
-            btn.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
+            btn = AppleNavButton(name)
             btn.clicked.connect(lambda checked, idx=i: self._switch(idx))
             sb.addWidget(btn)
             self.nav_buttons.append(btn)
