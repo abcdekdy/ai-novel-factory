@@ -187,6 +187,15 @@ class SettingsTab(QWidget):
         web_group.finalize()
         layout.addWidget(web_group)
 
+        # ===== 外观组（主题切换）=====
+        appearance_group = _AppleSettingsPanel(title="Appearance")
+        appearance_layout = appearance_group.form_layout()
+        self.theme_combo = QComboBox()
+        self.theme_combo.addItems(["Light", "Dark"])
+        appearance_layout.addRow("Theme:", self.theme_combo)
+        appearance_group.finalize()
+        layout.addWidget(appearance_group)
+
         # ===== 保存按钮（滚动区外，固定在底部）=====
         save_layout = QHBoxLayout()
         save_layout.addStretch()
@@ -247,6 +256,11 @@ class SettingsTab(QWidget):
             self.config.get("default_chapter_length", 3000))
         self.port_spin.setValue(self.config.get("web_monitor_port", 5000))
 
+        theme = self.config.get("theme", "light")
+        idx = self.theme_combo.findText(theme.capitalize())
+        if idx >= 0:
+            self.theme_combo.setCurrentIndex(idx)
+
     def _save_settings(self):
         self.config["api_key"] = self.api_key_input.text().strip()
         self.config["provider"] = self.provider_combo.currentText()
@@ -259,6 +273,7 @@ class SettingsTab(QWidget):
         self.config["default_chapter_count"] = self.chapter_count_spin.value()
         self.config["default_chapter_length"] = self.chapter_length_spin.value()
         self.config["web_monitor_port"] = self.port_spin.value()
+        self.config["theme"] = self.theme_combo.currentText().lower()
 
         save_config(self.config)
         self.config_changed.emit()

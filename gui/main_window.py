@@ -67,6 +67,167 @@ class MainWindow(QMainWindow):
         self.pipeline = NovelPipeline()
         self._setup_ui()
         self._setup_pipeline_signals()
+        # 应用主题（light / dark）
+        self.apply_theme(self.config.get("theme", "light"))
+
+    def apply_theme(self, theme_name: str):
+        """根据主题名生成 QSS 并应用到全局。"""
+        theme = dt.THEMES.get(theme_name, dt.THEMES["light"])
+        qss = self._generate_qss(theme)
+        self.setStyleSheet(qss)
+        # 同步更新 Sidebar 背景色
+        for w in self.findChildren(Sidebar):
+            w.update()
+
+    def _generate_qss(self, theme: dict) -> str:
+        """根据主题 token 字典生成完整 QSS 字符串。"""
+        a = theme  # 简写
+        return f"""
+QMainWindow, QDialog {{
+    background-color: {a["BG_BASE"]};
+    color: {a["TEXT_PRIMARY"]};
+    font-family: {dt.FONT_SYSTEM};
+}}
+* {{ outline: none; }}
+
+Sidebar {{
+    background-color: {a["BG_SIDEBAR"]};
+    border-right: 1px solid {a["BORDER"]};
+}}
+
+AppleNavButton {{
+    background: transparent;
+    color: {a["TEXT_MUTED"]};
+    border: none;
+    border-radius: 10px;
+    padding: 8px 14px;
+    text-align: left;
+    font-size: 13px;
+    font-weight: 500;
+    margin: 2px 10px;
+}}
+AppleNavButton:hover {{
+    color: {a["TEXT_PRIMARY"]};
+    background: {dt.rgba(a["TEXT_PRIMARY"], 0.06)};
+    font-weight: 600;
+}}
+AppleNavButton:checked {{
+    color: #FFFFFF;
+    font-weight: 600;
+    background: {a["ACCENT"]};
+}}
+
+QPushButton {{
+    background-color: {a["BG_INPUT"]};
+    color: {a["TEXT_PRIMARY"]};
+    border: 1px solid {a["BORDER"]};
+    padding: 6px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+}}
+QPushButton:hover {{
+    border-color: {a["ACCENT"]};
+    background-color: {dt.rgba(a["ACCENT"], 0.08)};
+}}
+QPushButton:pressed {{ background-color: {dt.rgba(a["ACCENT"], 0.15)}; }}
+QPushButton:disabled {{ color: {a["TEXT_DISABLED"]}; background-color: {a["BG_INPUT"]}; border-color: {a["BORDER"]}; }}
+
+QPushButton#primaryButton {{
+    background-color: {a["ACCENT"]};
+    color: #FFFFFF;
+    border: none;
+    padding: 8px 22px;
+    border-radius: 10px;
+    font-weight: 600;
+}}
+QPushButton#primaryButton:hover {{ background-color: {a["ACCENT_HOVER"]}; }}
+QPushButton#primaryButton:pressed {{ background-color: {a["ACCENT_DIM"]}; }}
+QPushButton#primaryButton:disabled {{ background-color: {a["BORDER"]}; color: {a["TEXT_DISABLED"]}; }}
+
+QTextEdit, QLineEdit {{
+    background-color: {a["SURFACE"]};
+    color: {a["TEXT_PRIMARY"]};
+    border: 1px solid {a["BORDER"]};
+    border-radius: 8px;
+    padding: 6px 10px;
+    selection-background-color: {a["ACCENT"]};
+}}
+QTextEdit:focus, QLineEdit:focus {{
+    border: 2px solid {a["ACCENT"]};
+}}
+
+QListWidget {{
+    background: transparent;
+    border: none;
+    color: {a["TEXT_PRIMARY"]};
+}}
+QListWidget::item:selected {{
+    background: {a["ACCENT_SOFT"]};
+    color: {a["ACCENT"]};
+    border-radius: 6px;
+}}
+QListWidget::item:hover {{
+    background: {dt.rgba(a["TEXT_PRIMARY"], 0.04)};
+    border-radius: 6px;
+}}
+
+QProgressBar {{
+    border: none;
+    background: {a["BG_INPUT"]};
+    border-radius: 999px;
+    height: 6px;
+    text-align: center;
+}}
+QProgressBar::chunk {{
+    background: {a["ACCENT"]};
+    border-radius: 999px;
+}}
+
+QScrollBar:vertical {{
+    background: transparent;
+    width: 6px;
+    border-radius: 3px;
+}}
+QScrollBar::handle:vertical {{
+    background: {a["BORDER"]};
+    border-radius: 3px;
+    min-height: 30px;
+}}
+QScrollBar::handle:vertical:hover {{ background: {a["TEXT_MUTED"]}; }}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
+
+QComboBox, QSpinBox {{
+    background-color: {a["SURFACE"]};
+    color: {a["TEXT_PRIMARY"]};
+    border: 1px solid {a["BORDER"]};
+    border-radius: 8px;
+    padding: 4px 8px;
+}}
+QComboBox::drop-down {{ border: none; width: 20px; }}
+QComboBox QAbstractItemView {{
+    background: {a["SURFACE"]};
+    color: {a["TEXT_PRIMARY"]};
+    selection-background-color: {a["ACCENT_SOFT"]};
+}}
+
+QToolTip {{
+    background: {a["TEXT_PRIMARY"]};
+    color: {a["BG_BASE"]};
+    border: none;
+    border-radius: 6px;
+    padding: 4px 8px;
+}}
+
+QStatusBar {{
+    background: {a["BG_BASE"]};
+    color: {a["TEXT_MUTED"]};
+}}
+
+AppleCard, AppleInput, AppleInset {{
+    background-color: {a["SURFACE"]};
+    color: {a["TEXT_PRIMARY"]};
+}}
+"""
 
     def _setup_ui(self):
         central = QWidget()
