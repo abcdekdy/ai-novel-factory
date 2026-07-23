@@ -16,11 +16,11 @@ Apple Light 核心组件 — PyQt6 实现 (v6)
 """
 
 from PyQt6.QtWidgets import (
-    QFrame, QWidget, QGraphicsDropShadowEffect,
+    QFrame, QWidget, QGraphicsDropShadowEffect, QGraphicsOpacityEffect,
     QVBoxLayout, QHBoxLayout
 )
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QColor
+from PyQt6.QtCore import Qt, QPropertyAnimation, QEasingCurve
+from PyQt6.QtGui import QColor, QPainter
 
 import assets.design_tokens as dt
 
@@ -52,7 +52,7 @@ def _card_shadow(parent, strong=False):
 # =======================================================================
 class AppleCard(QFrame):
     """
-    Apple 风格卡片 — 纯白底 + 轻投影。
+    Apple 风格卡片 — 纯白底 + 轻投影 + 顶部高光。
     .content_layout() 获取内容 QVBoxLayout。
     """
     def __init__(self, radius=None, strong_shadow=False, parent=None):
@@ -67,13 +67,26 @@ class AppleCard(QFrame):
                 border-radius: {self._radius}px;
             }}
         """)
-        margins = 10 if strong_shadow else 8
         self._inner = QVBoxLayout(self)
-        self._inner.setContentsMargins(margins, margins, margins, margins)
+        self._inner.setContentsMargins(dt.LG, dt.LG, dt.LG, dt.LG)
         self._inner.setSpacing(0)
 
     def content_layout(self):
         return self._inner
+
+    def paintEvent(self, event):
+        """绘制顶部高光（参考 dashdot 玻璃拟态）。"""
+        try:
+            super().paintEvent(event)
+            p = QPainter(self)
+            p.setRenderHint(QPainter.RenderHint.Antialiasing)
+            # 顶部 1px 高光
+            highlight = QColor(dt.TEXT_PRIMARY)
+            highlight.setAlphaF(dt.HIGHLIGHT_ALPHA)
+            p.setPen(highlight)
+            p.drawLine(0, 0, self.width(), 0)
+        except Exception as e:
+            print(f"[AppleCard paintEvent ERROR] {e}")
 
 
 # =======================================================================
@@ -141,6 +154,21 @@ def neu_bump(widget, radius=None):
 def neu_pressed(widget):
     """按下态 — 浅灰底。"""
     widget.setStyleSheet(f"background-color: {dt.BG_PRESSED};")
+
+
+def fade_widget(widget, duration=200):
+    """淡入效果（用于卡片/页面出现动画）。"""
+    effect = QGraphicsOpacityEffect(widget)
+    widget.setGraphicsEffect(effect)
+    anim = QPropertyAnimation(effect, b"opacity")
+    anim.setDuration(duration)
+    anim.setStartValue(0.0)
+    anim.setEndValue(1.0)
+    anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+    anim.start()
+    # 防止动画被垃圾回收
+    widget._fade_anim = anim
+    return anim
 
 
 # =======================================================================

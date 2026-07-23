@@ -95,3 +95,23 @@ def rgba(hex_color, alpha):
     hex_color = hex_color.lstrip("#")
     r, g, b = int(hex_color[0:2], 16), int(hex_color[2:4], 16), int(hex_color[4:6], 16)
     return f"rgba({r},{g},{b},{alpha})"
+
+
+# ── 面板层级透明度（参考 dashdot 玻璃拟态）──
+PANEL_BG_ALPHA = 0.85      # 面板底色不透明度
+HIGHLIGHT_ALPHA = 0.08     # 顶部高光不透明度
+BORDER_ALPHA = 0.12        # 边框不透明度
+
+# ── 动效 token（参考 qt-material-widgets）──
+DURATION_FAST = 100        # ms — 按钮悬停
+DURATION_NORMAL = 200      # ms — 页面切换
+DURATION_SLOW = 350        # ms — 侧边栏折叠
+
+# ── 暗色主题 token ──
+DARK_BG_BASE = "#1C1C1E"
+DARK_BG_SIDEBAR = "#2C2C2E"
+DARK_SURFACE = "#3A3A3C"
+DARK_TEXT_PRIMARY = "#FFFFFF"
+DARK_TEXT_SECONDARY = "#EBEBF5"
+DARK_BORDER = "#48484A"
+DARK_ACCENT = "#0A84FF"

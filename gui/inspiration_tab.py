@@ -5,14 +5,14 @@ Inspiration Tab — Apple Light Style
 
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QTextEdit, QPushButton, QFrame,
-    QGraphicsDropShadowEffect, QMessageBox, QSizePolicy
+    QTextEdit, QPushButton, QFrame, QMessageBox, QSizePolicy
 )
 from PyQt6.QtCore import pyqtSignal, pyqtSlot, Qt
-from PyQt6.QtGui import QFont, QCursor, QColor
+from PyQt6.QtGui import QFont, QCursor
 
 from core.config import load_config, save_config
 from gui.widgets.stepper import AppleStepper
+from gui.widgets.neumorphism import AppleCard
 from assets import design_tokens as dt
 
 
@@ -46,8 +46,8 @@ class InspirationTab(QWidget):
         layout.addWidget(sub)
 
         # Idea input area — AppleCard
-        frame = _AppleContainer(radius=14, parent=self)
-        fl = frame.inner_layout()
+        frame = AppleCard(radius=14, parent=self)
+        fl = frame.content_layout()
         fl.setSpacing(12)
 
         lbl = QLabel("创作灵感")
@@ -119,8 +119,8 @@ class InspirationTab(QWidget):
         layout.addWidget(frame)
 
         # Parameters row
-        params = _AppleContainer(radius=14, parent=self)
-        pl = params.inner_layout()
+        params = AppleCard(radius=14, parent=self)
+        pl = params.content_layout()
         pl.setSpacing(16)
         pl.setContentsMargins(24, 22, 24, 22)
 
@@ -222,26 +222,3 @@ class InspirationTab(QWidget):
             self.parent().parent().setCurrentIndex(1)
 
 
-# --- 内部辅助: Apple 容器 (供本模块快速使用) ---
-class _AppleContainer(QFrame):
-    """Apple 风格凸面容器 — 白底 + 轻投影, 提供 inner_layout()。"""
-    def __init__(self, radius=14, parent=None):
-        super().__init__(parent)
-        self._radius = radius
-        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        eff = QGraphicsDropShadowEffect(self)
-        c = QColor(dt.SHADOW_COLOR); c.setAlphaF(dt.SHADOW_ALPHA)
-        eff.setColor(c); eff.setOffset(0, dt.SHADOW_Y); eff.setBlurRadius(dt.SHADOW_BLUR)
-        self.setGraphicsEffect(eff)
-        self.setStyleSheet(f"""
-            _AppleContainer {{
-                background-color: {dt.SURFACE};
-                border: 1px solid {dt.BORDER_LIGHT};
-                border-radius: {radius}px;
-            }}
-        """)
-        self._inner = QVBoxLayout(self)
-        self._inner.setContentsMargins(16, 16, 16, 16)
-        self._inner.setSpacing(0)
-
-    def inner_layout(self): return self._inner

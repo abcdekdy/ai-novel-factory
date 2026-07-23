@@ -8,16 +8,16 @@ from pathlib import Path
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QListWidget, QListWidgetItem, QTextEdit, QPushButton,
-    QSplitter, QGroupBox, QMessageBox, QFileDialog,
-    QGraphicsDropShadowEffect
+    QSplitter, QGroupBox, QMessageBox, QFileDialog
 )
 from PyQt6.QtCore import Qt, pyqtSlot
-from PyQt6.QtGui import QFont, QCursor, QColor
+from PyQt6.QtGui import QFont, QCursor
 
 from core.project_manager import (
     load_world_view, load_all_chapters, export_to_txt, export_to_markdown,
     save_chapter, load_chapter
 )
+from gui.widgets.neumorphism import AppleInset
 from assets import design_tokens as dt
 
 
@@ -68,8 +68,10 @@ class PreviewTab(QWidget):
         splitter = QSplitter(Qt.Orientation.Horizontal)
 
         # 左：世界观 — Apple 浅灰凹陷
-        world_widget = _AppleInset(radius=12, parent=self)
-        wl = world_widget.inner_layout()
+        world_widget = AppleInset(radius=12, parent=self)
+        wl = QVBoxLayout(world_widget)
+        wl.setContentsMargins(14, 14, 14, 14)
+        wl.setSpacing(0)
         world_header = QLabel("世界观")
         world_header.setFont(QFont("Inter", 12, QFont.Weight.Bold))
         world_header.setStyleSheet(f"color: {dt.TEXT_SECONDARY};")
@@ -83,8 +85,10 @@ class PreviewTab(QWidget):
         splitter.addWidget(world_widget)
 
         # 中：章节列表 — Apple 浅灰凹陷
-        chapter_widget = _AppleInset(radius=12, parent=self)
-        cl = chapter_widget.inner_layout()
+        chapter_widget = AppleInset(radius=12, parent=self)
+        cl = QVBoxLayout(chapter_widget)
+        cl.setContentsMargins(14, 14, 14, 14)
+        cl.setSpacing(0)
         chapter_header = QLabel("章节目录")
         chapter_header.setFont(QFont("Inter", 12, QFont.Weight.Bold))
         chapter_header.setStyleSheet(f"color: {dt.TEXT_SECONDARY};")
@@ -97,8 +101,10 @@ class PreviewTab(QWidget):
         splitter.addWidget(chapter_widget)
 
         # 右：章节内容预览 — Apple 浅灰凹陷
-        content_widget = _AppleInset(radius=12, parent=self)
-        cl2 = content_widget.inner_layout()
+        content_widget = AppleInset(radius=12, parent=self)
+        cl2 = QVBoxLayout(content_widget)
+        cl2.setContentsMargins(14, 14, 14, 14)
+        cl2.setSpacing(0)
         content_header_layout = QHBoxLayout()
         content_header_layout.setSpacing(8)
         content_header = QLabel("章节内容")
@@ -558,23 +564,3 @@ class PreviewTab(QWidget):
                 QMessageBox.warning(self, "导出失败", "内容为空或导出出错")
 
 
-class _AppleInset(QWidget):
-    """Apple 风格凹陷容器 — 浅灰底 + 细边框，内含 inner_layout。"""
-    def __init__(self, radius=12, parent=None):
-        super().__init__(parent)
-        self._radius = radius
-        self.setMinimumWidth(160)
-        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
-        self.setStyleSheet(f"""
-            _AppleInset {{
-                background-color: {dt.BG_INPUT};
-                border: 1px solid {dt.BORDER};
-                border-radius: {radius}px;
-            }}
-        """)
-        self._inner = QVBoxLayout(self)
-        self._inner.setContentsMargins(14, 14, 14, 14)
-        self._inner.setSpacing(0)
-
-    def inner_layout(self):
-        return self._inner
