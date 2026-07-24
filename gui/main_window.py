@@ -486,8 +486,8 @@ QMenu::item:selected {{ background: {a["ACCENT_SOFT"]}; color: {a["ACCENT"]}; }}
 
         # 校验续写指引
         if not guidance or len(guidance.strip()) < 10:
-            self.statusBar().showMessage(
-                f"项目《{title}》：续写指引至少 10 字")
+            QMessageBox.warning(self, "续写指引过短",
+                                "续写指引至少 10 字，请补充更多内容。")
             return
 
         self.pipeline.initialize()

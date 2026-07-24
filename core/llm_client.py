@@ -35,10 +35,16 @@ class LLMClient:
     """
 
     def __init__(self, api_key: str, provider: str = "longcat",
-                 base_url: str = None, model: str = None, max_retries: int = 3):
+                 base_url: str = None, model: str = None, max_retries: int = 3,
+                 timeout: float = 120.0):
+        """
+        timeout: 单次调用超时秒数（connect + read 合计）。
+                 续写大纲等长 prompt 场景建议 ≥ 120s。
+        """
         self.api_key = api_key
         self.provider = provider.lower()
         self.max_retries = max_retries
+        self.timeout = timeout
         self._streaming_callback = None
 
         if self.provider == "longcat":
@@ -49,7 +55,8 @@ class LLMClient:
             self.model = model or "LongCat-2.0"
             self.client = anthropic.Anthropic(
                 auth_token=api_key,   # Bearer <REDAUTH> 方式
-                base_url=self.base_url
+                base_url=self.base_url,
+                timeout=timeout,
             )
         elif self.provider == "deepseek":
             # OpenAI兼容模式
@@ -60,7 +67,8 @@ class LLMClient:
             self.client = openai.OpenAI(
                 api_key=api_key,
                 base_url=self.base_url,
-                max_retries=0
+                max_retries=0,
+                timeout=timeout,
             )
         else:
             raise ValueError(f"不支持的provider: {provider}，可选: longcat, deepseek")

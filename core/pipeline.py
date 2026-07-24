@@ -1451,8 +1451,16 @@ class NovelPipeline(QObject):
             "Pipeline",
             f"▶️ 用户确认续写大纲，开始生成第 {start_idx}-{end_idx} 章...")
 
-        # 进入章节生成
-        self._generate_continuation_chapters(reviewed_outline)
+        # 章节生成调用模型，放到后台线程，避免阻塞界面
+        import threading
+        def _run_chapters():
+            try:
+                self._generate_continuation_chapters(reviewed_outline)
+            except Exception as e:
+                self._handle_error(f"续写章节生成异常: {e}")
+        self._pipeline_thread = threading.Thread(
+            target=_run_chapters, daemon=True)
+        self._pipeline_thread.start()
 
     def _generate_continuation_chapters(self, outline: dict):
         """用审阅后的续写大纲并行生成章节。"""
